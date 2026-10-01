@@ -1,5 +1,9 @@
 # Change history for the Godot OpenXR loaders asset
 
+## 5.1.0-zq.1 (rockcen9 fork)
+
+- Implement `XR_META_spatial_entity_group_sharing`: `OpenXRFbSpatialEntity.share_with_group()` and `OpenXRFbSpatialEntityQuery.query_by_group()`
+
 ## 5.1.0
 
 - Add manual page for Android XR Trackables (#499)
