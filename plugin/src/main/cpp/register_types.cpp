@@ -446,6 +446,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			_register_extension_as_singleton(OpenXRMetaSimultaneousHandsAndControllersExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRMetaHeadsetIDExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRMetaColocationDiscoveryExtension::get_singleton());
+			_register_extension_as_singleton(OpenXRMetaSpatialEntityGroupSharingExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRFbBodyTrackingExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRHtcFacialTrackingExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRHtcPassthroughExtension::get_singleton());
