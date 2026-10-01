@@ -43,7 +43,9 @@ void OpenXRFbSpatialEntityQuery::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("query_all"), &OpenXRFbSpatialEntityQuery::query_all);
 	ClassDB::bind_method(D_METHOD("query_by_uuid", "uuids", "location"), &OpenXRFbSpatialEntityQuery::query_by_uuid, DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL));
 	ClassDB::bind_method(D_METHOD("query_by_component", "component", "location"), &OpenXRFbSpatialEntityQuery::query_by_component, DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL));
+	ClassDB::bind_method(D_METHOD("query_by_group", "group_uuid"), &OpenXRFbSpatialEntityQuery::query_by_group);
 	ClassDB::bind_method(D_METHOD("get_query_type"), &OpenXRFbSpatialEntityQuery::get_query_type);
+	ClassDB::bind_method(D_METHOD("get_group_uuid"), &OpenXRFbSpatialEntityQuery::get_group_uuid);
 	ClassDB::bind_method(D_METHOD("get_storage_location"), &OpenXRFbSpatialEntityQuery::get_storage_location);
 	ClassDB::bind_method(D_METHOD("get_uuids"), &OpenXRFbSpatialEntityQuery::get_uuids);
 	ClassDB::bind_method(D_METHOD("get_component_type"), &OpenXRFbSpatialEntityQuery::get_component_type);
@@ -55,6 +57,7 @@ void OpenXRFbSpatialEntityQuery::_bind_methods() {
 	BIND_ENUM_CONSTANT(QUERY_ALL);
 	BIND_ENUM_CONSTANT(QUERY_BY_UUID);
 	BIND_ENUM_CONSTANT(QUERY_BY_COMPONENT);
+	BIND_ENUM_CONSTANT(QUERY_BY_GROUP);
 
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_entity_query_completed", PropertyInfo(Variant::Type::ARRAY, "results")));
 }
@@ -77,6 +80,7 @@ void OpenXRFbSpatialEntityQuery::query_all() {
 	component_type = OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE;
 	location = OpenXRFbSpatialEntity::STORAGE_LOCAL;
 	uuids.clear();
+	group_uuid = String();
 }
 
 void OpenXRFbSpatialEntityQuery::query_by_uuid(Array p_uuids, OpenXRFbSpatialEntity::StorageLocation p_location) {
@@ -85,6 +89,7 @@ void OpenXRFbSpatialEntityQuery::query_by_uuid(Array p_uuids, OpenXRFbSpatialEnt
 	location = p_location;
 	// Reset data used for other query types.
 	component_type = OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE;
+	group_uuid = String();
 }
 
 void OpenXRFbSpatialEntityQuery::query_by_component(OpenXRFbSpatialEntity::ComponentType p_component_type, OpenXRFbSpatialEntity::StorageLocation p_location) {
@@ -93,6 +98,21 @@ void OpenXRFbSpatialEntityQuery::query_by_component(OpenXRFbSpatialEntity::Compo
 	location = p_location;
 	// Reset data used for other query types.
 	uuids.clear();
+	group_uuid = String();
+}
+
+void OpenXRFbSpatialEntityQuery::query_by_group(const String &p_group_uuid) {
+	query_type = QUERY_BY_GROUP;
+	group_uuid = p_group_uuid;
+	// Spaces shared with a group only live in the cloud.
+	location = OpenXRFbSpatialEntity::STORAGE_CLOUD;
+	// Reset data used for other query types.
+	component_type = OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE;
+	uuids.clear();
+}
+
+String OpenXRFbSpatialEntityQuery::get_group_uuid() const {
+	return group_uuid;
 }
 
 float OpenXRFbSpatialEntityQuery::get_timeout() const {
@@ -129,6 +149,9 @@ Error OpenXRFbSpatialEntityQuery::execute() {
 		} break;
 		case QUERY_BY_COMPONENT: {
 			succeeded = _execute_query_by_component();
+		} break;
+		case QUERY_BY_GROUP: {
+			succeeded = _execute_query_by_group();
 		} break;
 		default:
 			return ERR_INVALID_DATA;
@@ -199,6 +222,36 @@ bool OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 		XR_TYPE_SPACE_COMPONENT_FILTER_INFO_FB, // type
 		&location_filter, // next
 		OpenXRFbSpatialEntity::to_openxr_component_type(component_type), // componentType
+	};
+
+	XrSpaceQueryInfoFB query = {
+		XR_TYPE_SPACE_QUERY_INFO_FB, // type
+		nullptr, // next
+		XR_SPACE_QUERY_ACTION_LOAD_FB, // queryAction
+		max_results, // maxResultsCount
+		(XrDuration)(timeout * 1000000), // timeout
+		(XrSpaceFilterInfoBaseHeaderFB *)&filter, // filter
+		nullptr, // excludeFilter
+	};
+
+	Ref<OpenXRFbSpatialEntityQuery> *userdata = memnew(Ref<OpenXRFbSpatialEntityQuery>(this));
+	return OpenXRFbSpatialEntityQueryExtension::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, userdata);
+}
+
+bool OpenXRFbSpatialEntityQuery::_execute_query_by_group() {
+	XrUuidEXT group;
+	ERR_FAIL_COND_V_MSG(!OpenXRFbSpatialEntity::uuid_from_string(group_uuid, group), false, vformat("Invalid group UUID: %s", group_uuid));
+
+	XrSpaceStorageLocationFilterInfoFB location_filter = {
+		XR_TYPE_SPACE_STORAGE_LOCATION_FILTER_INFO_FB, // type
+		nullptr, // next
+		XR_SPACE_STORAGE_LOCATION_CLOUD_FB, // location
+	};
+
+	XrSpaceGroupUuidFilterInfoMETA filter = {
+		XR_TYPE_SPACE_GROUP_UUID_FILTER_INFO_META, // type
+		&location_filter, // next
+		group, // groupUuid
 	};
 
 	XrSpaceQueryInfoFB query = {

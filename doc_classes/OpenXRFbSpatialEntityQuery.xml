@@ -24,6 +24,13 @@
 				See [method query_by_component].
 			</description>
 		</method>
+		<method name="get_group_uuid" qualifiers="const">
+			<return type="String" />
+			<description>
+				Gets the group UUID being searched for when querying by group.
+				See [method query_by_group].
+			</description>
+		</method>
 		<method name="get_query_type" qualifiers="const">
 			<return type="int" enum="OpenXRFbSpatialEntityQuery.QueryType" />
 			<description>
@@ -57,6 +64,14 @@
 			<param index="1" name="location" type="int" enum="OpenXRFbSpatialEntity.StorageLocation" default="0" />
 			<description>
 				Sets up the query to get all spatial entities with the given component in the given storage location (up to the limit of [member max_results]).
+			</description>
+		</method>
+		<method name="query_by_group">
+			<return type="void" />
+			<param index="0" name="group_uuid" type="String" />
+			<description>
+				Sets up the query to get the spatial entities shared with the given group UUID (up to the limit of [member max_results]). Group-shared entities are always loaded from the cloud.
+				Requires [OpenXRMetaSpatialEntityGroupSharingExtension].
 			</description>
 		</method>
 		<method name="query_by_uuid">
@@ -94,6 +109,9 @@
 		</constant>
 		<constant name="QUERY_BY_COMPONENT" value="2" enum="QueryType">
 			Query by component.
+		</constant>
+		<constant name="QUERY_BY_GROUP" value="3" enum="QueryType">
+			Query by group UUID.
 		</constant>
 	</constants>
 </class>

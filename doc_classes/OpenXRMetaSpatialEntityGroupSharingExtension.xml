@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="OpenXRMetaSpatialEntityGroupSharingExtension" inherits="OpenXRExtensionWrapper" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Wraps the [code]XR_META_spatial_entity_sharing[/code] and [code]XR_META_spatial_entity_group_sharing[/code] extensions.
+	</brief_description>
+	<description>
+		Wraps the [code]XR_META_spatial_entity_sharing[/code] and [code]XR_META_spatial_entity_group_sharing[/code] extensions, which share spatial entities with a group UUID chosen by the application instead of with Meta platform users. See [method OpenXRFbSpatialEntity.share_with_group] and [method OpenXRFbSpatialEntityQuery.query_by_group].
+		Enabled together with the [code]xr/openxr/extensions/meta/anchor_sharing[/code] project setting.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="is_group_sharing_supported">
+			<return type="bool" />
+			<description>
+				Checks if both extensions are enabled.
+			</description>
+		</method>
+	</methods>
+</class>

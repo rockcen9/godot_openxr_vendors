@@ -96,6 +96,7 @@
 #include "extensions/openxr_meta_performance_metrics_extension.h"
 #include "extensions/openxr_meta_recommended_layer_resolution_extension.h"
 #include "extensions/openxr_meta_simultaneous_hands_and_controllers_extension.h"
+#include "extensions/openxr_meta_spatial_entity_group_sharing_extension.h"
 #include "extensions/openxr_meta_spatial_entity_mesh_extension.h"
 #include "extensions/openxr_ml_marker_understanding_extension.h"
 #include "extensions/openxr_session_helper_extension.h"
@@ -213,6 +214,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			GDREGISTER_CLASS(OpenXRFbSpatialEntityQueryExtension);
 			GDREGISTER_CLASS(OpenXRFbSpatialEntityContainerExtension);
 			GDREGISTER_CLASS(OpenXRFbSpatialEntityUserExtension);
+			GDREGISTER_CLASS(OpenXRMetaSpatialEntityGroupSharingExtension);
 			GDREGISTER_CLASS(OpenXRMetaRecommendedLayerResolutionExtension);
 			GDREGISTER_CLASS(OpenXRMetaSimultaneousHandsAndControllersExtension);
 			GDREGISTER_CLASS(OpenXRMetaHeadsetIDExtension);
@@ -278,6 +280,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 				if (meta_anchor_sharing) {
 					_register_extension_with_openxr(OpenXRFbSpatialEntitySharingExtension::get_singleton());
 					_register_extension_with_openxr(OpenXRFbSpatialEntityUserExtension::get_singleton());
+					_register_extension_with_openxr(OpenXRMetaSpatialEntityGroupSharingExtension::get_singleton());
 				}
 			}
 

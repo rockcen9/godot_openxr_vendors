@@ -156,6 +156,15 @@
 				This is an asynchronous operation - the [signal openxr_fb_spatial_entity_set_component_enabled_completed] signal will be emitted when completed with an argument indicating if it was successful or not.
 			</description>
 		</method>
+		<method name="share_with_group">
+			<return type="void" />
+			<param index="0" name="group_uuid" type="String" />
+			<description>
+				Shares this spatial entity with a group UUID chosen by the application. Other headsets load it with [method OpenXRFbSpatialEntityQuery.query_by_group].
+				Requires [OpenXRMetaSpatialEntityGroupSharingExtension] and the component [constant COMPONENT_TYPE_SHARABLE] enabled.
+				This is an asynchronous operation - the [signal openxr_fb_spatial_entity_shared] signal will be emitted when completed with an argument indicating if it was successful or not.
+			</description>
+		</method>
 		<method name="share_with_users">
 			<return type="void" />
 			<param index="0" name="users" type="OpenXRFbSpatialEntityUser[]" />

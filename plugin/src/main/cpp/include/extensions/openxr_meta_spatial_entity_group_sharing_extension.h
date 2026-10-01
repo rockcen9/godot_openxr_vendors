@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  openxr_fb_spatial_entity_query.h                                      */
+/*  openxr_meta_spatial_entity_group_sharing_extension.h                  */
 /**************************************************************************/
 /*                       This file is part of:                            */
 /*                              GODOT XR                                  */
@@ -30,65 +30,71 @@
 #pragma once
 
 #include <openxr/openxr.h>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/classes/open_xr_extension_wrapper.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 
-#include "classes/openxr_fb_spatial_entity.h"
+#include "util.h"
 
-namespace godot {
-class OpenXRFbSpatialEntityQuery : public RefCounted {
-	GDCLASS(OpenXRFbSpatialEntityQuery, RefCounted);
+using namespace godot;
+
+// Wrapper for XR_META_spatial_entity_sharing + XR_META_spatial_entity_group_sharing.
+// Shares spaces with a group UUID instead of Meta platform users.
+class OpenXRMetaSpatialEntityGroupSharingExtension : public OpenXRExtensionWrapper {
+	GDCLASS(OpenXRMetaSpatialEntityGroupSharingExtension, OpenXRExtensionWrapper);
 
 public:
-	enum QueryType {
-		QUERY_ALL,
-		QUERY_BY_UUID,
-		QUERY_BY_COMPONENT,
-		QUERY_BY_GROUP,
-	};
+	Dictionary _get_requested_extensions(uint64_t p_xr_version) override;
 
-private:
-	QueryType query_type = QUERY_ALL;
-	OpenXRFbSpatialEntity::StorageLocation location = OpenXRFbSpatialEntity::STORAGE_LOCAL;
-	OpenXRFbSpatialEntity::ComponentType component_type = OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE;
-	uint32_t max_results = 25;
-	float timeout = 0.0f;
-	Array uuids;
-	String group_uuid;
+	void _on_instance_created(uint64_t instance) override;
+	void _on_instance_destroyed() override;
 
-	bool executed = false;
+	bool is_group_sharing_supported() {
+		return meta_spatial_entity_sharing_ext && meta_spatial_entity_group_sharing_ext;
+	}
+
+	typedef void (*ShareSpacesCompleteCallback)(XrResult p_result, void *p_userdata);
+
+	bool share_spaces_with_groups(XrSpace *p_spaces, uint32_t p_space_count, XrUuid *p_groups, uint32_t p_group_count, ShareSpacesCompleteCallback p_callback, void *p_userdata);
+
+	virtual bool _on_event_polled(const void *event) override;
+
+	static OpenXRMetaSpatialEntityGroupSharingExtension *get_singleton();
+
+	OpenXRMetaSpatialEntityGroupSharingExtension();
+	~OpenXRMetaSpatialEntityGroupSharingExtension();
 
 protected:
 	static void _bind_methods();
 
-	bool _execute_query_all();
-	bool _execute_query_by_uuid();
-	bool _execute_query_by_component();
-	bool _execute_query_by_group();
+private:
+	EXT_PROTO_XRRESULT_FUNC3(xrShareSpacesMETA,
+			(XrSession), session,
+			(const XrShareSpacesInfoMETA *), info,
+			(XrAsyncRequestIdFB *), requestId);
 
-public:
-	void set_max_results(uint32_t p_max_results);
-	uint32_t get_max_results() const;
+	bool initialize_meta_spatial_entity_sharing_extension(const XrInstance &instance);
+	void on_share_spaces_complete(const XrEventDataShareSpacesCompleteMETA *event);
 
-	void set_timeout(float p_timeout);
-	float get_timeout() const;
+	HashMap<String, bool *> request_extensions;
 
-	void query_all();
-	void query_by_uuid(Array p_uuids, OpenXRFbSpatialEntity::StorageLocation p_location = OpenXRFbSpatialEntity::STORAGE_LOCAL);
-	void query_by_component(OpenXRFbSpatialEntity::ComponentType p_component_type, OpenXRFbSpatialEntity::StorageLocation p_location = OpenXRFbSpatialEntity::STORAGE_LOCAL);
-	void query_by_group(const String &p_group_uuid);
+	struct RequestInfo {
+		ShareSpacesCompleteCallback callback = nullptr;
+		void *userdata = nullptr;
 
-	QueryType get_query_type() const;
-	String get_group_uuid() const;
-	OpenXRFbSpatialEntity::StorageLocation get_storage_location() const;
-	Array get_uuids() const;
-	OpenXRFbSpatialEntity::ComponentType get_component_type() const;
+		RequestInfo() {}
 
-	Error execute();
-	bool is_executed() const;
+		RequestInfo(ShareSpacesCompleteCallback p_callback, void *p_userdata) {
+			callback = p_callback;
+			userdata = p_userdata;
+		}
+	};
 
-	static void _results_callback(const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
+	HashMap<XrAsyncRequestIdFB, RequestInfo> requests;
+
+	void cleanup();
+
+	static OpenXRMetaSpatialEntityGroupSharingExtension *singleton;
+
+	bool meta_spatial_entity_sharing_ext = false;
+	bool meta_spatial_entity_group_sharing_ext = false;
 };
-} // namespace godot
-
-VARIANT_ENUM_CAST(OpenXRFbSpatialEntityQuery::QueryType);

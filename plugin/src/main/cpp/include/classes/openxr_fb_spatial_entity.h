@@ -108,7 +108,10 @@ public:
 	void save_to_storage(StorageLocation p_location = STORAGE_LOCAL);
 	void erase_from_storage(StorageLocation p_location = STORAGE_LOCAL);
 	void share_with_users(const TypedArray<OpenXRFbSpatialEntityUser> &p_users);
+	void share_with_group(const String &p_group_uuid);
 	void destroy();
+
+	static bool uuid_from_string(const String &p_uuid, XrUuidEXT &r_uuid);
 
 	static XrSpaceStorageLocationFB to_openxr_storage_location(StorageLocation p_location);
 	static StorageLocation from_openxr_storage_location(XrSpaceStorageLocationFB p_location);
